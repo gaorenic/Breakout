@@ -28,8 +28,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
         creatBackground()
         makeLoseZone()
-        resetGame()
         makeLabels()
+        resetGame()
     }
     
     func resetGame() {
@@ -125,10 +125,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // now, figure the number and spacing of each row of bricks
         let count = Int(frame.width)/55 //bricks per row
         let xOffset = (Int(frame.width) - (count * 55))/2 + Int(frame.minX) + 25
-        let y = Int(frame.maxY) - 15
-        for i in 0..<count {
-            let x = i * 55 + xOffset
-            makeBrick(x: x, y: y, color: .green)
+        let colors: [UIColor] = [.blue, .orange, .green]
+        for r in 0 ..< 3 {
+            let y = Int(frame.maxY) - 15 - (r * 25)
+            for i in 0..<count {
+                let x = i * 55 + xOffset
+                makeBrick(x: x, y: y, color: colors[r])
+            }
         }
     }
     
@@ -140,6 +143,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         loseZone.physicsBody?.isDynamic = false
         addChild(loseZone)
     }
+    
     func makeLabels() {
         playLabel.fontSize = 24
         playLabel.text = "Tap to start"
@@ -157,7 +161,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.fontColor = .black
         scoreLabel.fontName = "Arial"
         scoreLabel.position = CGPoint(x: frame.maxX - 50, y: frame.minY + 18)
-        
+        addChild(scoreLabel)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -185,19 +189,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for touch in touches {
             let location = touch.location(in: self)
             paddle.position.x = location.x
-            makeLabels()
         }
     }
+    
     func didBegin(_ contact: SKPhysicsContact) {
         // ask each brick, Is it you?"
         for brick in bricks {
-            if contact.bodyA.node?.name == "brick" ||
-                contact.bodyB.node?.name == "brick" {
+            if contact.bodyA.node == brick ||
+                contact.bodyB.node == brick {
                 score += 1
                 updateLabels()
-                brick.removeFromParent()
-                if removedBricks == bricks.count {
-                    gameOver(winner: true)
+                if brick.color == .blue {
+                    brick.color = .orange   //blue brick turns orange
+                }
+                else if brick.color == .orange {
+                    brick.color = .green    //orange brick turns green
+                }
+                else {  //must be a green brick, which will get removed 
+                    brick.removeFromParent()
+                    removedBricks += 1
+                    if removedBricks == bricks.count {
+                        gameOver(winner: true)
+                    }
                 }
             }
         }
